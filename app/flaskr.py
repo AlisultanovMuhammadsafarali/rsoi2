@@ -101,15 +101,6 @@ def token():
 
 @app.route('/', methods=['GET', 'POST'])
 def index():
-#     if request.method == 'GET':
-#         if 'code' in request.args:
-#             # resp = redirect(url_for('login'))
-#             # resp.headers['Authorization'] = 'Bearer mytoken'
-#             return redirect(url_for('token', code=request.args['code'], client_id=client_id, client_secret=client_secret, redirect_uri=redirect_uri, grant_type="authorization_code"))
-
-#     if request.method=='POST':
-#         print "POST tratata"
-
     return render_template('ideakeep.html')
 
 
@@ -153,14 +144,12 @@ def me():
             return jsonify({"name": user['name'], "email": user['email'], "phone": user['phone']})
         else:
             logout1(request.headers['Authorization'])
-            # return make_response(jsonify({"error": "token is expired"}), 401)
+
     return make_response(jsonify({"message": "access denied"}), 401)
 
 
 @app.route('/show_entries_page/<page>')
 def show_entries_page(page):
-    # if request.cookies.get(app.session_cookie_name) is not None:
-        # if session['logged_in']:
     if 'Authorization' in request.headers:
         if test_token(request.headers['Authorization']):
             user_id = query_db('select user_fk from sess where access_token = ?', [request.headers['Authorization']], one=True)
@@ -178,15 +167,12 @@ def show_entries_page(page):
             return jsonify({'items': to_ret, 'current': page, 'shown': 1, 'amount': maxp})
         else:
             logout1(request.headers['Authorization'])
-            # return make_response(jsonify({"error": "token is expired"}), 401)
-            # return render_template('show_entries.html', entries=entries)
+
     return make_response(jsonify({"message": "access denied"}), 401)
 
 
 @app.route('/show_entries')
 def show_entries():
-    # if request.cookies.get(app.session_cookie_name) is not None:
-        # if session['logged_in']:
     if 'Authorization' in request.headers:
         if test_token(request.headers['Authorization']):
             user_id = query_db('select user_fk from sess where access_token = ?', [request.headers['Authorization']], one=True)
@@ -207,10 +193,8 @@ def show_entries():
             return jsonify({'items': to_ret, 'current': 1, 'shown': shown, 'amount': maxp})
         else:
             logout1(request.headers['Authorization'])
-            # return make_response(jsonify({"error": "token is expired"}), 401)
-            # return render_template('show_entries.html', entries=entries)
+
     return make_response(jsonify({"message": "access denied"}), 401)
-    # return render_template('show_entries.html')
 
 
 def maxpages(user_id):
@@ -240,15 +224,6 @@ def query_db(query, args=(), one=False):
     return (rv[0] if rv else None) if one else rv
 
 
-# @app.route('/set_cookie')
-def cookie_insertion(index, code, value):
-    # redirect_to_index = redirect(url_for(index))
-    responce = app.make_response(url_for(index, code=code))
-    print "hello cookie_insertion: ", responce
-    responce.set_cookie('test_cookie', value=value)
-    return responce
-
-
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     error = None
@@ -263,30 +238,10 @@ def login():
         elif request.form['password'] != user['password']:
             return make_response(jsonify({"error": "Invalid password"}), 401)
         else:
-            # session['user_id'] = user['user_id']
-            # session['logged_in'] = True
-
-            # response = make_response(redirect(url_for('show_entries', name1=user['name'])))
-            # response.set_cookie('username', str(user['user_id']))
-            # token = random.randrange(256**5)
-            # refrashtoken = random.randrange(256**5)
-            # expire = int(time.time()) + (ONLINE_LAST_MINUTES * 60) + 10
-
-            # session.set_cookie('test_cookie', value='test')
-            # s = Session()
-            # s.user_id = user['user_id']
-            # s.ip = request.remote_addr
-
-            # if s.setSession():
-            #     responce = make_responce(redirect(url_for('show_entries', name1=user['name'])))
-            #     responce.set_cookie('session_id', s.session_id)
-
             redirect_uri = request.form['redirect_uri']
             flash('You were logged in')
             code = get_code(user['user_id'], redirect_uri)
             resp = "http://" + redirect_uri + "?" + "code=" + code
-            # responce = make_response(redirect(tmp, code=code))
-            # responce.set_cookie("user_id", value=str(user['user_id']))
             return redirect(resp)
 
     return render_template('login.html', redirect_uri=redirect_uri, error=error)
