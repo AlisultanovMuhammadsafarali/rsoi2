@@ -229,7 +229,7 @@ def login():
     error = None
     if (request.method == 'GET'):
         if 'redirect_uri' in request.args:
-            redirect_uri = request.args['redirect_uri']
+            redirect_url = request.args['redirect_uri']
 
     if request.method == 'POST':
         user = query_db('select * from users where name = ?', [request.form['username']], one=True)
@@ -244,7 +244,7 @@ def login():
             resp = "http://" + redirect_uri + "?" + "code=" + code
             return redirect(resp)
 
-    return render_template('login.html', redirect_uri=redirect_uri, error=error)
+    return render_template('login.html', redirect_uri=redirect_url, error=error)
 
 
 @app.route("/signup", methods=["GET", "POST"])
@@ -256,26 +256,27 @@ def signup():
 def signedup():
     error = None
     if request.method == 'POST':
-        if not session.get("logged_in"):
-            db = get_db()
-            name = request.form['username']
-            password = request.form['password']
-            email = request.form['email']
-            phone = request.form['phone']
-            db.execute('insert into users (name, password, email, phone) values (?, ?, ?, ?)',
-                        (name, password, email, phone))
-            db.commit()
-            # session['user_id'] = query_db('select max(user_id) from users', one=True)[0]
-            # session['logged_in'] = True
-            flash('Welcome! Your registration was successful.')
-            return redirect(url_for('show_entries'))
+        db = get_db()
+        name = request.form['username']
+        password = request.form['password']
+        email = request.form['email']
+        phone = request.form['phone']
+        db.execute('insert into users (name, password, email, phone) values (?, ?, ?, ?)',
+                    (name, password, email, phone))
+        db.commit()
+
+        user = query_db('select * from users where name = ?', [request.form['username']], one=True)
+        redirect_uri = request.form['redirect_uri']
+        flash('Welcome! Your registration was successful.')
+        code = get_code(user['user_id'], redirect_uri)
+        resp = "http://" + redirect_uri + "?" + "code=" + code
+        return redirect(resp)
+
     return render_template('signup.html', error=error)
 
 
 @app.route('/logout')
 def logout():
-    # user_id = request.cookies.get('user_id')
-    # session['logged_in'] = False
     db = get_db()
     db.execute('select sess set access_token = ?, refresh_token = ?, expire_in = ?, expire_time = ? where sess_id = ?', [access_token, refresh_token, expire_in, expire_time, user_sess['sess_id']])
     db.commit()
